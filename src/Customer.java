@@ -1,4 +1,6 @@
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 class User implements Serializable {
     private String name;
@@ -98,13 +100,36 @@ class Rider extends User implements Serializable {
     private String bikeLicense;
     private boolean approvalStatus = false;
     private int balance = 0;
+    private List<Integer> ratings;
 
-    public Rider(String name, String email, String password, String username, String gender, int age, String phoneNumber, String nid, String drivingLicense, String bikeLicense) {
+    public Rider() {
+        ratings = new ArrayList<>();
+    }
+
+    public Rider(String name, String email, String password, String username, String gender, int age,
+                 String phoneNumber, String nid, String drivingLicense, String bikeLicense) {
         super(name, email, password, username, gender, age);
         this.phoneNumber = phoneNumber;
-        this.bikeLicense = bikeLicense;
-        this.drivingLicense = drivingLicense;
         this.nid = nid;
+        this.drivingLicense = drivingLicense;
+        this.bikeLicense = bikeLicense;
+        this.ratings = new ArrayList<>();
+    }
+
+    public void addRating(int rating) {
+        ratings.add(rating);
+    }
+
+    public double calculateAverageRating() {
+        if (ratings.isEmpty()) {
+            return 0.0;
+        } else {
+            int sum = 0;
+            for (int rating : ratings) {
+                sum += rating;
+            }
+            return (double) sum / ratings.size();
+        }
     }
 
     // Getter and setter for the phone number

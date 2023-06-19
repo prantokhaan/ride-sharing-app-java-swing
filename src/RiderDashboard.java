@@ -10,6 +10,7 @@ public class RiderDashboard extends JFrame {
     private JLabel nameLabel;
     private JLabel emailLabel;
     private JLabel balanceLabel;
+    private JLabel ratingLabel;
     private JButton viewRequestsButton;
     private JButton profileButton;
 
@@ -19,31 +20,54 @@ public class RiderDashboard extends JFrame {
     public RiderDashboard(String username) {
         setTitle("Rider Dashboard");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout());
+        setLayout(new GridBagLayout());
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        gbc.insets = new Insets(10, 10, 10, 10);
 
         nameLabel = new JLabel();
         nameLabel.setHorizontalAlignment(SwingConstants.CENTER);
         nameLabel.setFont(new Font("Arial", Font.BOLD, 20));
-        add(nameLabel, BorderLayout.NORTH);
+        add(nameLabel, gbc);
 
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
         emailLabel = new JLabel();
         emailLabel.setHorizontalAlignment(SwingConstants.CENTER);
         emailLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-        add(emailLabel, BorderLayout.CENTER);
+        add(emailLabel, gbc);
 
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         balanceLabel = new JLabel();
         balanceLabel.setHorizontalAlignment(SwingConstants.CENTER);
         balanceLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-        add(balanceLabel, BorderLayout.CENTER);
+        add(balanceLabel, gbc);
 
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        ratingLabel = new JLabel();
+        ratingLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        ratingLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+        add(ratingLabel, gbc);
+
+        gbc.gridy = 4;
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
         JPanel buttonPanel = new JPanel(new FlowLayout());
 
-        viewRequestsButton = new JButton("View Requests");
+        viewRequestsButton = new JButton("Pending Rides");
         viewRequestsButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 // Perform view requests action
-                JOptionPane.showMessageDialog(null, "View Requests action performed");
+                ViewAllRidesRiderPage pending = new ViewAllRidesRiderPage(loggedInRider, "ride.ser");
+                pending.setVisible(true);
             }
         });
         buttonPanel.add(viewRequestsButton);
@@ -57,7 +81,7 @@ public class RiderDashboard extends JFrame {
         });
         buttonPanel.add(profileButton);
 
-        add(buttonPanel, BorderLayout.SOUTH);
+        add(buttonPanel, gbc);
 
         loadRiders(); // Load riders from file
         findLoggedInRider(username); // Find logged-in rider
@@ -66,10 +90,12 @@ public class RiderDashboard extends JFrame {
             nameLabel.setText("Welcome, " + loggedInRider.getName());
             emailLabel.setText("Email: " + loggedInRider.getEmail());
             balanceLabel.setText("Balance: " + loggedInRider.getBalance());
+            ratingLabel.setText("Rating: " + loggedInRider.calculateAverageRating());
         } else {
             nameLabel.setText("Welcome");
             emailLabel.setText("");
             balanceLabel.setText("");
+            ratingLabel.setText("");
         }
 
         pack();
@@ -102,14 +128,14 @@ public class RiderDashboard extends JFrame {
     }
 
     private void findLoggedInRider(String username) {
-        try{
+        try {
             for (Rider rider : riders) {
-            if (rider.getUsername().equals(username)) {
-                loggedInRider = rider;
-                break;
+                if (rider.getUsername().equals(username)) {
+                    loggedInRider = rider;
+                    break;
+                }
             }
-        }
-        }catch(Exception e){
+        } catch (Exception e) {
             System.out.println(e.getMessage());
         }
     }

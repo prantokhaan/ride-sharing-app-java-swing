@@ -78,7 +78,7 @@ public class BookRidePage extends JFrame {
     double distance = calculateDistance(sourceLocation, destinationLocation);
     double fare = calculateFare(distance);
 
-    Ride ride = new Ride(customer, selectedRider, startTime, sourceLocation, destinationLocation, distance, fare);
+    Ride ride = new Ride(customer, selectedRider, startTime, sourceLocation, destinationLocation, distance, fare, "Pending");
 
     saveBookRide(ride, "ride.ser");
 

@@ -10,8 +10,9 @@ public class Ride implements Serializable {
     private String destinationLocation;
     private double distance;
     private double fare;
+    private String rideStatus = "pending";
 
-    public Ride(Customer customer, Rider rider, LocalDateTime startTime, String sourceLocation, String destinationLocation, double distance, double fare) {
+    public Ride(Customer customer, Rider rider, LocalDateTime startTime, String sourceLocation, String destinationLocation, double distance, double fare, String rideStatus) {
         this.customer = customer;
         this.rider = rider;
         this.startTime = startTime;
@@ -55,5 +56,13 @@ public class Ride implements Serializable {
 
     public double getFare() {
         return fare;
+    }
+
+    public String getRideStatus(){
+        return rideStatus;
+    }
+
+    public void changeRideStatus(String rideStatus){
+        this.rideStatus = rideStatus;
     }
 }

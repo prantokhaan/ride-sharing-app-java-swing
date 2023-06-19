@@ -1,19 +1,18 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
-public class ViewAllRidesPage extends JFrame {
-    private JTextArea ridesTextArea;
-    private Customer customer;
+public class ViewAllRidesRiderPage extends JFrame {
     private JPanel ridesPanel;
+    private Rider rider;
     private String filename;
 
-    public ViewAllRidesPage(Customer customer, String filename) {
-        this.customer = customer;
+    public ViewAllRidesRiderPage(Rider rider, String filename) {
+        this.rider = rider;
         this.filename = filename;
 
         setTitle("View All Rides");
@@ -42,8 +41,8 @@ public class ViewAllRidesPage extends JFrame {
             while (fileIn.available() > 0) {
                 ride = (Ride) objectIn.readObject();
 
-                // Check if the ride is booked by the logged-in customer
-                if (ride.getCustomer().getUsername().equals(customer.getUsername())) {
+                // Check if the ride is booked by the logged-in rider
+                if (ride.getRider().getUsername().equals(rider.getUsername())) {
                     rides.add(ride);
                 }
             }
@@ -75,17 +74,18 @@ public class ViewAllRidesPage extends JFrame {
                 JLabel fareLabel = new JLabel("Fare: $" + ride.getFare());
                 JLabel rideStatusLabel = new JLabel("Ride Status: " + ride.getRideStatus());
 
-                JButton reachedDestinationButton = new JButton("Finish");
-                reachedDestinationButton.addActionListener(new ReachedDestinationButtonListener(ride));
+                JButton acceptButton = new JButton("Accept");
+                acceptButton.addActionListener(new AcceptButtonListener(ride));
 
-                JButton rateRiderButton = new JButton("Rate the Rider");
-                rateRiderButton.addActionListener(new RateRiderButtonListener(ride));
+                JButton reachedButton = new JButton("Reached");
+                reachedButton.addActionListener(new ReachedButtonListener(ride));
 
                 JPanel buttonPanel = new JPanel();
-                if (ride.getRideStatus().equals("Reached to the Location")) {
-                    buttonPanel.add(reachedDestinationButton);
-                } else if (ride.getRideStatus().equals("Ride Finished")) {
-                    buttonPanel.add(rateRiderButton);
+                if(ride.getRideStatus().equals("Pending") || ride.getRideStatus().equals("pending")){
+                    buttonPanel.add(acceptButton);
+                }else if(ride.getRideStatus().equals("Accepted")){
+                    buttonPanel.remove(acceptButton);
+                    buttonPanel.add(reachedButton);
                 }
 
                 ridePanel.add(customerLabel);
@@ -104,44 +104,35 @@ public class ViewAllRidesPage extends JFrame {
         }
     }
 
-    private class ReachedDestinationButtonListener implements ActionListener {
+    private class AcceptButtonListener implements ActionListener {
         private Ride ride;
 
-        public ReachedDestinationButtonListener(Ride ride) {
+        public AcceptButtonListener(Ride ride) {
             this.ride = ride;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            reachedDestinationRider(ride);
+            acceptRide(ride);
         }
     }
-
-    private class RateRiderButtonListener implements ActionListener {
+    private class ReachedButtonListener implements ActionListener {
         private Ride ride;
 
-        public RateRiderButtonListener(Ride ride) {
+        public ReachedButtonListener(Ride ride) {
             this.ride = ride;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            int rating = Integer.parseInt(JOptionPane.showInputDialog("Enter a rating (1-5):"));
-            if (rating >= 1 && rating <= 5) {
-                ride.getRider().addRating(rating);
-                updateRiderRating(ride.getRider());
-
-                JOptionPane.showMessageDialog(ViewAllRidesPage.this, "Rating added successfully!", "Rating", JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(ViewAllRidesPage.this, "Invalid rating entered!", "Rating Error", JOptionPane.ERROR_MESSAGE);
-            }
+            ReachedRider(ride);
         }
     }
 
-    private void reachedDestinationRider(Ride ride) {
+    private void acceptRide(Ride ride) {
         // Perform actions when the accept button is clicked
         // For example, you can update the ride status or perform other necessary operations
-        ride.changeRideStatus("Ride Finished");
+        ride.changeRideStatus("Accepted");
 
         // Update the ride status in the ride.ser file
         try {
@@ -153,7 +144,46 @@ public class ViewAllRidesPage extends JFrame {
             while (fileIn.available() > 0) {
                 existingRide = (Ride) objectIn.readObject();
                 if (existingRide.getStartTime().equals(ride.getStartTime())) {
-                    existingRide.changeRideStatus("Ride Finished");
+                    existingRide.changeRideStatus("Accepted");
+                }
+                updatedRides.add(existingRide);
+            }
+
+            objectIn.close();
+            fileIn.close();
+
+            FileOutputStream fileOut = new FileOutputStream(filename);
+            ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
+
+            for (Ride updatedRide : updatedRides) {
+                objectOut.writeObject(updatedRide);
+            }
+
+            objectOut.close();
+            fileOut.close();
+        } catch (IOException | ClassNotFoundException ex) {
+            ex.printStackTrace();
+        }
+
+        // Show a message indicating that the ride has been accepted
+        JOptionPane.showMessageDialog(this, "Ride Accepted!", "Ride Acceptance", JOptionPane.INFORMATION_MESSAGE);
+    }
+    private void ReachedRider(Ride ride) {
+        // Perform actions when the accept button is clicked
+        // For example, you can update the ride status or perform other necessary operations
+        ride.changeRideStatus("Reached to the Location");
+
+        // Update the ride status in the ride.ser file
+        try {
+            FileInputStream fileIn = new FileInputStream(filename);
+            ObjectInputStream objectIn = new ObjectInputStream(fileIn);
+
+            List<Ride> updatedRides = new ArrayList<>();
+            Ride existingRide;
+            while (fileIn.available() > 0) {
+                existingRide = (Ride) objectIn.readObject();
+                if (existingRide.getStartTime().equals(ride.getStartTime())) {
+                    existingRide.changeRideStatus("Reached to the Location");
                 }
                 updatedRides.add(existingRide);
             }
@@ -178,43 +208,11 @@ public class ViewAllRidesPage extends JFrame {
         JOptionPane.showMessageDialog(this, "Rider Reached!", "Ride Acceptance", JOptionPane.INFORMATION_MESSAGE);
     }
 
-    private void updateRiderRating(Rider rider) {
-        try {
-            FileInputStream fileIn = new FileInputStream("rider.ser");
-            ObjectInputStream objectIn = new ObjectInputStream(fileIn);
-
-            List<Rider> updatedRiders = new ArrayList<>();
-            Rider existingRider;
-            while (fileIn.available() > 0) {
-                existingRider = (Rider) objectIn.readObject();
-                if (existingRider.getUsername().equals(rider.getUsername())) {
-                    existingRider = rider;
-                }
-                updatedRiders.add(existingRider);
-            }
-
-            objectIn.close();
-            fileIn.close();
-
-            FileOutputStream fileOut = new FileOutputStream("rider.ser");
-            ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
-
-            for (Rider updatedRider : updatedRiders) {
-                objectOut.writeObject(updatedRider);
-            }
-
-            objectOut.close();
-            fileOut.close();
-        } catch (IOException | ClassNotFoundException ex) {
-            ex.printStackTrace();
-        }
-    }
-
     public static void main(String[] args) {
-        Customer customer = new Customer(); // Replace with your own customer object
+        Rider rider = new Rider(); // Replace with your own rider object
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                new ViewAllRidesPage(customer, "ride.ser");
+                new ViewAllRidesRiderPage(rider, "ride.ser");
             }
         });
     }
